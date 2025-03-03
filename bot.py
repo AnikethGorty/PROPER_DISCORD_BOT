@@ -71,11 +71,19 @@ async def send_periodic_messages():
         await asyncio.sleep(3 * 60 * 60)  # Wait 3 hours (3 * 60 minutes * 60 seconds)
 
 def get_default_channel(guild):
-    """Finds the first text channel the bot can send messages in."""
+    """Finds the best text channel to send messages in."""
+    # Try to find a channel named 'general' first
+    for channel in guild.text_channels:
+        if channel.name == "general" and channel.permissions_for(guild.me).send_messages:
+            return channel  # Prefer #general if it's available
+
+    # If no #general, return the first text channel where the bot has permission
     for channel in guild.text_channels:
         if channel.permissions_for(guild.me).send_messages:
-            return channel  # Return the first accessible channel
+            return channel
+
     return None  # If no valid channel is found
+
 
 @bot.command()
 async def quote(ctx):
