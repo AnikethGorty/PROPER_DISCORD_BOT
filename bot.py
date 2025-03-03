@@ -5,18 +5,15 @@ import requests
 import random
 import asyncio
 from bs4 import BeautifulSoup as bs
-from datetime import datetime, time, timedelta
 from discord.ext import commands
 
 # Load environment variables
-
+load_dotenv()  # ✅ You need this to load .env properly!
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 # Ensure token exists
 if not TOKEN:
     raise ValueError("Bot token not found! Make sure it's in the .env file.")
-
-CHANNEL_ID = 1346081090992869438  # Replace with your actual channel ID
 
 # Set up bot with necessary intents
 intents = discord.Intents.default()
@@ -54,43 +51,50 @@ async def fetch_nectar_drop():
     else:
         return "Could not find the 'Pages in category' header."
 
-async def send_daily_message():
-    """Sends a nectar drop every day at 6:00 PM."""
+async def send_periodic_messages():
+    """Sends a Nectar Drop every 3 hours to all servers."""
     await bot.wait_until_ready()
-    channel = bot.get_channel(CHANNEL_ID)
-
-    if not channel:
-        print(f"Error: Could not find channel with ID {CHANNEL_ID}")
-        return
 
     while not bot.is_closed():
-        now = datetime.now()
-        target_time = time(18, 0)  # 6:00 PM
-        target_datetime = datetime.combine(now.date(), target_time)
-
-        if now > target_datetime:
-            target_datetime += timedelta(days=1)
-
-        wait_time = (target_datetime - now).total_seconds()
-        print(f"Waiting {wait_time} seconds until next message...")
-        
-        await asyncio.sleep(wait_time)
         message = await fetch_nectar_drop()
-        await channel.send(message)
+
+        for guild in bot.guilds:
+            channel = get_default_channel(guild)
+            if channel:
+                try:
+                    await channel.send(message)
+                    print(f"✅ Sent message to {guild.name} in #{channel.name}")
+                except discord.Forbidden:
+                    print(f"❌ No permission to send messages in {guild.name}")
+
+        print("⏳ Waiting 3 hours before sending the next message...")
+        await asyncio.sleep(3 * 60 * 60)  # Wait 3 hours (3 * 60 minutes * 60 seconds)
+
+def get_default_channel(guild):
+    """Finds the first text channel the bot can send messages in."""
+    for channel in guild.text_channels:
+        if channel.permissions_for(guild.me).send_messages:
+            return channel  # Return the first accessible channel
+    return None  # If no valid channel is found
 
 @bot.command()
 async def quote(ctx):
     """Responds with a random Nectar Drop when !quote is used."""
     message = await fetch_nectar_drop()
+    if not message:
+        message = "⚠️ Sorry, I couldn't find a Nectar Drop right now. Please try again!"
     await ctx.send(message)
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
-    print("Available Channels:")
+    print(f"🚀 Logged in as {bot.user}")
+    print("🔍 Available Servers & Channels:")
+    
     for guild in bot.guilds:
+        print(f"📌 Server: {guild.name}")
         for channel in guild.text_channels:
-            print(f"{channel.name} - ID: {channel.id}")
+            print(f"   ➜ #{channel.name} - ID: {channel.id}")
 
+    bot.loop.create_task(send_periodic_messages())  # Start periodic messaging
 
 bot.run(TOKEN)
