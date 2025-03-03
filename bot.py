@@ -9,8 +9,7 @@ from datetime import datetime, time, timedelta
 from discord.ext import commands
 
 # Load environment variables
-env_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path=env_path)
+
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 # Ensure token exists
