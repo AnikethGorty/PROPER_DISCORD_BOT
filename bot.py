@@ -52,7 +52,7 @@ async def fetch_nectar_drop():
         return "Could not find the 'Pages in category' header."
 
 async def send_periodic_messages():
-    """Sends a Nectar Drop every 3 hours to all servers."""
+    """Sends a Nectar Drop every 12 hours to all servers."""
     await bot.wait_until_ready()
 
     while not bot.is_closed():
@@ -68,7 +68,7 @@ async def send_periodic_messages():
                     print(f"❌ No permission to send messages in {guild.name}")
 
         print("⏳ Waiting 3 hours before sending the next message...")
-        await asyncio.sleep(3 * 60 * 60)  # Wait 3 hours (3 * 60 minutes * 60 seconds)
+        await asyncio.sleep(12 * 60 * 60)  # Wait 12 hours (12 * 60 minutes * 60 seconds)
 
 def get_default_channel(guild):
     """Finds the best text channel to send messages in."""
